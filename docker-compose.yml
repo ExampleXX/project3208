@@ -44,12 +44,12 @@ services:
       - "8080:80"
     volumes:
       - ./src:/var/www/html
-      - ./default_nginx.conf:/etc/nginx/conf.d/default.conf
     networks:
       - mynet
     depends_on:
       - myphp
     restart: always
+
 
   # Use the latest phpMyAdmin
   phpmyadmin:
