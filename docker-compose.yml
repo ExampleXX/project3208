@@ -1,0 +1,73 @@
+version: "3.3"
+
+# Define a network called mynet and configure the dependencies between the services
+# Use the latest MariaDB 
+services:
+  mysql:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: MyDBRoot123
+      MYSQL_DATABASE: cloud_computing
+      MYSQL_USER: php
+      MYSQL_PASSWORD: php
+    networks:
+      - mynet
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+  # Use the latest Redis 
+  myredis:
+    image: redis:latest
+    networks:
+      - mynet
+    restart: always
+
+  # Configuring the PHP-FPM service
+  myphp:
+    build: ./src/php
+    volumes:
+      - ./src:/var/www/html
+    expose:
+      - "9000"
+    networks:
+      - mynet
+    depends_on:
+      - mysql
+      - myredis
+    restart: always
+
+  # Nginx
+  mynginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./src/nginx.ini:/etc/nginx/conf.d/default.conf
+    networks:
+      - mynet
+    depends_on:
+      - myphp
+    restart: always
+
+  # Use the latest phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: mysql
+    networks:
+      - mynet
+    depends_on:
+      - mysql
+    restart: always
+
+networks:
+  mynet:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
